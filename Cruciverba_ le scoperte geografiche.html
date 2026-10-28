@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cruciverba: le scoperte geografiche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eaf4f8; --panel:#ffffff; --ink:#12263a; --muted:#4a6275; --sea:#1f6f8b; --sea-ink:#ffffff;
+  --cell:#ffffff; --cell-line:#12263a; --word:#cfe8f2; --cur:#f2b134; --cur-ink:#12263a;
+  --ok:#2e7d4f; --ok-bg:#d9f0e2; --bad:#b3261e; --bad-bg:#fbdcd9; --focus:#7a3fd1;
+  --s:clamp(30px,4.2vw,44px);
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1b26; --panel:#162a3a; --ink:#eef5fa; --muted:#a9c0d0; --sea:#4fb0cf; --sea-ink:#08202c;
+    --cell:#1d3447; --cell-line:#8fb4c9; --word:#2b5169; --cur:#f2b134; --cur-ink:#12263a;
+    --ok:#7ed6a0; --ok-bg:#1f4a33; --bad:#ff9d94; --bad-bg:#5a2420; --focus:#c9a6ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1b26; --panel:#162a3a; --ink:#eef5fa; --muted:#a9c0d0; --sea:#4fb0cf; --sea-ink:#08202c;
+  --cell:#1d3447; --cell-line:#8fb4c9; --word:#2b5169; --cur:#f2b134; --cur-ink:#12263a;
+  --ok:#7ed6a0; --ok-bg:#1f4a33; --bad:#ff9d94; --bad-bg:#5a2420; --focus:#c9a6ff;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,"Segoe UI",Arial,sans-serif;font-size:18px;line-height:1.5}
+main{max-width:1040px;margin:0 auto;padding:16px}
+h1{font-size:clamp(26px,5vw,38px);margin:4px 0 4px;line-height:1.15}
+.sub{color:var(--muted);margin:0 0 14px}
+.panel{background:var(--panel);border-radius:16px;padding:14px;margin-bottom:14px;border:2px solid var(--word)}
+.level{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.level span{font-weight:700}
+button{font:inherit;font-weight:700;min-height:48px;padding:8px 16px;border-radius:12px;border:2px solid var(--sea);background:var(--panel);color:var(--ink);cursor:pointer}
+button[aria-pressed="true"]{background:var(--sea);color:var(--sea-ink)}
+button.main{background:var(--sea);color:var(--sea-ink)}
+button:focus-visible,input:focus-visible,.clue:focus-visible{outline:4px solid var(--focus);outline-offset:2px}
+#bar{font-size:clamp(20px,3.4vw,26px);font-weight:700;background:var(--sea);color:var(--sea-ink);border-radius:12px;padding:12px 16px;margin-bottom:12px;min-height:3.2em}
+#bar small{display:block;font-weight:400;font-size:.7em;opacity:.9}
+.scroller{overflow-x:auto;padding:6px 2px 10px}
+#grid{display:grid;gap:0;width:max-content;margin:0 auto}
+.cell{position:relative;width:var(--s);height:var(--s);background:var(--cell);border:2px solid var(--cell-line);margin:-1px 0 0 -1px;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.58);font-weight:700;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.cell.blank{visibility:hidden;border:0;cursor:default}
+.cell.inword{background:var(--word)}
+.cell.cur{background:var(--cur);color:var(--cur-ink)}
+.cell.bad{background:var(--bad-bg);color:var(--bad)}
+.cell.done{background:var(--ok-bg);color:var(--ok)}
+.cell .n{position:absolute;top:1px;left:3px;font-size:calc(var(--s)*.3);font-weight:700;line-height:1}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+#msg{min-height:2.2em;font-weight:700;margin:10px 0 0}
+#msg.ok{color:var(--ok)} #msg.bad{color:var(--bad)}
+.progress{font-weight:700}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+h2{font-size:22px;margin:0 0 8px}
+ul{list-style:none;margin:0;padding:0}
+.clue{display:flex;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border:2px solid transparent}
+.clue b{min-width:1.6em;color:var(--sea)}
+.clue.cur{background:var(--cur);color:var(--cur-ink);border-color:var(--cur-ink)}
+.clue.cur b{color:var(--cur-ink)}
+.clue.done{text-decoration:line-through;text-decoration-thickness:2px;opacity:.75}
+.bank{display:flex;flex-wrap:wrap;gap:8px}
+.bank span{background:var(--word);border-radius:999px;padding:6px 14px;font-weight:700}
+.bank span.used{text-decoration:line-through;opacity:.55}
+#kb{position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0;border:0;padding:0}
+@media (prefers-reduced-motion:no-preference){.cell{transition:background .15s}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Le scoperte geografiche</h1>
+  <p class="sub">Tocca una casella, poi scrivi la risposta. Le lettere in comune tra due parole si scrivono una volta sola.</p>
+
+  <div class="panel">
+    <div class="level" role="group" aria-label="Livello">
+      <span>Livello:</span>
+      <button id="lvF" aria-pressed="true">Facile (con elenco delle parole)</button>
+      <button id="lvD" aria-pressed="false">Difficile (senza elenco)</button>
+    </div>
+    <div id="bar" aria-live="polite"></div>
+    <div class="scroller"><div id="grid" role="grid" aria-label="Griglia del cruciverba"></div></div>
+    <input id="kb" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" aria-label="Scrivi la lettera">
+    <div class="actions">
+      <button class="main" id="bCheck">Controlla</button>
+      <button id="bHint">Aiuto: mostra una lettera</button>
+      <button id="bReset">Ricomincia</button>
+    </div>
+    <p id="msg" role="status"></p>
+    <p class="progress" id="prog"></p>
+  </div>
+
+  <div class="panel" id="bankPanel">
+    <h2>Parole da inserire</h2>
+    <div class="bank" id="bank"></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel"><h2>Orizzontali</h2><ul id="clO"></ul></div>
+    <div class="panel"><h2>Verticali</h2><ul id="clV"></ul></div>
+  </div>
+</main>
+
+<script>
+const W=[
+ {n:1,d:"V",r:0,c:9,a:"TORDESILLAS",t:"Vi si firmò il trattato che spartì il mondo tra potenze coloniali"},
+ {n:2,d:"O",r:1,c:0,a:"PORTOGALLO",t:"La nazione che avviò le esplorazioni geografiche"},
+ {n:3,d:"O",r:1,c:11,a:"PALOS",t:"Il porto da cui salpò Colombo"},
+ {n:4,d:"V",r:1,c:12,a:"ATLANTICO",t:"Divenne il centro delle nuove rotte commerciali marittime"},
+ {n:5,d:"O",r:4,c:6,a:"MAGELLANO",t:"Guidò la spedizione che circumnavigò il globo terrestre"},
+ {n:6,d:"V",r:5,c:15,a:"PIZARRO",t:"Cancellò l’impero degli Incas"},
+ {n:7,d:"O",r:6,c:4,a:"VENEZIA",t:"Commerciava con l’Oriente"},
+ {n:8,d:"O",r:6,c:15,a:"INDIE",t:"Così erano chiamati i territori dell’Estremo Oriente"},
+ {n:9,d:"O",r:8,c:12,a:"CARAVELLE",t:"La regina Isabella ne diede tre a Cristoforo Colombo"},
+ {n:10,d:"O",r:9,c:3,a:"ASTROLABIO",t:"Invenzione utile per i navigatori"}
+];
+const ROWS=12, COLS=21;
+const cells={}, val={}; let wrong=new Set(), sel=null, dir="O", level="F", finished=false;
+const key=(r,c)=>r+","+c;
+W.forEach((w,i)=>{
+  for(let k=0;k<w.a.length;k++){
+    const r=w.r+(w.d==="V"?k:0), c=w.c+(w.d==="O"?k:0), id=key(r,c);
+    cells[id]=cells[id]||{r,c,ch:w.a[k],w:{}};
+    cells[id].w[w.d]=i;
+    if(k===0) cells[id].n=w.n;
+  }
+});
+const wordKeys=i=>{const w=W[i];return [...w.a].map((_,k)=>key(w.r+(w.d==="V"?k:0),w.c+(w.d==="O"?k:0)))};
+const $=id=>document.getElementById(id);
+const dirName=d=>d==="O"?"orizzontale":"verticale";
+
+/* build grid */
+const grid=$("grid");
+grid.style.gridTemplateColumns="repeat("+COLS+",var(--s))";
+const el={};
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  const id=key(r,c), d=document.createElement("div");
+  if(cells[id]){
+    d.className="cell"; d.setAttribute("role","gridcell");
+    if(cells[id].n){const n=document.createElement("span");n.className="n";n.textContent=cells[id].n;d.appendChild(n);}
+    const t=document.createElement("span");t.className="t";d.appendChild(t);
+    d.addEventListener("click",()=>pick(r,c));
+    el[id]=d;
+  } else d.className="cell blank";
+  grid.appendChild(d);
+}
+/* clues */
+W.forEach((w,i)=>{
+  const li=document.createElement("li");
+  li.className="clue";li.tabIndex=0;li.id="clue"+i;
+  li.innerHTML="<b>"+w.n+"</b><span>"+w.t+" ("+w.a.length+" lettere)</span>";
+  li.addEventListener("click",()=>pickWord(i));
+  li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pickWord(i);}});
+  $(w.d==="O"?"clO":"clV").appendChild(li);
+});
+/* word bank, alphabetical, shuffled by length */
+const bankEl=$("bank");
+[...W].sort((a,b)=>a.a.length-b.a.length||a.a.localeCompare(b.a)).forEach(w=>{
+  const s=document.createElement("span");s.id="bk"+W.indexOf(w);s.textContent=w.a+" ("+w.a.length+")";bankEl.appendChild(s);
+});
+
+function curIdx(){
+  const c=cells[sel]; if(!c) return null;
+  if(c.w[dir]===undefined) dir=dir==="O"?"V":"O";
+  return c.w[dir];
+}
+function pick(r,c){
+  const id=key(r,c), cell=cells[id];
+  if(sel===id && cell.w.O!==undefined && cell.w.V!==undefined) dir=dir==="O"?"V":"O";
+  else if(cell.w[dir]===undefined) dir=dir==="O"?"V":"O";
+  sel=id; focusKb(); refresh();
+}
+function pickWord(i){
+  dir=W[i].d; const ks=wordKeys(i);
+  sel=ks.find(k=>!val[k])||ks[0]; focusKb(); refresh();
+  $("grid").scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function focusKb(){const k=$("kb");k.value="";k.focus({preventScroll:true});}
+function moveInWord(step){
+  const i=curIdx(); if(i===null) return;
+  const ks=wordKeys(i), p=ks.indexOf(sel), n=p+step;
+  if(n>=0&&n<ks.length) sel=ks[n];
+}
+function wordDone(i){return wordKeys(i).every(k=>val[k]===cells[k].ch)}
+function setMsg(t,cls){const m=$("msg");m.textContent=t;m.className=cls||"";}
+
+function typeLetter(ch){
+  if(!sel||finished) return;
+  val[sel]=ch; wrong.delete(sel); setMsg("");
+  moveInWord(1); refresh(); checkEnd();
+}
+$("kb").addEventListener("input",e=>{
+  const v=e.target.value.toUpperCase().replace(/[^A-ZÀ-Ý]/g,"");
+  e.target.value=""; if(v) typeLetter(v.slice(-1));
+});
+$("kb").addEventListener("keydown",e=>{
+  if(!sel) return;
+  if(e.key==="Backspace"){
+    e.preventDefault();
+    if(val[sel]){delete val[sel];wrong.delete(sel);}
+    else{moveInWord(-1);delete val[sel];wrong.delete(sel);}
+    refresh();
+  }else if(e.key.startsWith("Arrow")){
+    e.preventDefault();
+    const c=cells[sel];
+    const dr=e.key==="ArrowDown"?1:e.key==="ArrowUp"?-1:0, dc=e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:0;
+    const nk=key(c.r+dr,c.c+dc);
+    if(cells[nk]){
+      dir=dr?"V":"O";
+      if(cells[nk].w[dir]===undefined) dir=dir==="O"?"V":"O";
+      sel=nk; refresh();
+    }
+  }
+});
+
+function refresh(){
+  const i=sel?curIdx():null, inW=i!==null?new Set(wordKeys(i)):new Set();
+  const full=new Set();
+  W.forEach((w,j)=>{if(wordDone(j)) wordKeys(j).forEach(k=>full.add(k));});
+  for(const id in el){
+    const d=el[id];
+    d.querySelector(".t").textContent=val[id]||"";
+    d.className="cell"+(inW.has(id)?" inword":"")+(id===sel?" cur":"")+(wrong.has(id)?" bad":"")+(full.has(id)&&id!==sel?" done":"");
+  }
+  let n=0;
+  W.forEach((w,j)=>{
+    const done=wordDone(j); if(done) n++;
+    $("clue"+j).className="clue"+(j===i?" cur":"")+(done?" done":"");
+    $("bk"+j).className=done?"used":"";
+  });
+  $("prog").textContent="Parole giuste: "+n+" su "+W.length;
+  const bar=$("bar");
+  if(i===null) bar.innerHTML="Tocca una casella per cominciare";
+  else bar.innerHTML=W[i].n+" "+dirName(W[i].d)+": "+W[i].t+"<small>"+W[i].a.length+" lettere</small>";
+}
+function checkEnd(){
+  if(W.every((w,j)=>wordDone(j))){
+    finished=true; setMsg("Bravo! Hai completato tutto il cruciverba.","ok");
+  }
+}
+$("bCheck").addEventListener("click",()=>{
+  wrong=new Set(); let filled=0;
+  for(const id in cells){ if(val[id]){filled++; if(val[id]!==cells[id].ch) wrong.add(id);} }
+  refresh();
+  if(!filled) setMsg("Scrivi qualche lettera, poi premi Controlla.");
+  else if(wrong.size) setMsg("Le caselle rosse sono sbagliate: "+wrong.size+". Riprova!","bad");
+  else if(!finished) setMsg("Fin qui è tutto giusto. Continua così!","ok");
+});
+$("bHint").addEventListener("click",()=>{
+  if(!sel){setMsg("Prima tocca una casella.");return;}
+  val[sel]=cells[sel].ch; wrong.delete(sel); setMsg("Ecco la lettera.");
+  refresh(); checkEnd(); focusKb();
+});
+$("bReset").addEventListener("click",()=>{
+  for(const k in val) delete val[k];
+  wrong=new Set(); finished=false; setMsg(""); refresh();
+});
+function setLevel(l){
+  level=l;
+  $("lvF").setAttribute("aria-pressed",l==="F");
+  $("lvD").setAttribute("aria-pressed",l==="D");
+  $("bankPanel").style.display=l==="F"?"":"none";
+}
+$("lvF").addEventListener("click",()=>setLevel("F"));
+$("lvD").addEventListener("click",()=>setLevel("D"));
+setLevel("F"); refresh();
+pickWord(1);
+</script>
+</body>
+</html>
